@@ -33,6 +33,11 @@ const updateBlogSchema = z
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields to update.' })
 
+function routeId(req: Request): string | null {
+  const id = req.params.id
+  return typeof id === 'string' && id.length > 0 ? id : null
+}
+
 function sendServiceResult<T>(
   res: Response,
   result: { ok: true; data: T } | { ok: false; error: string; status: number },
@@ -56,7 +61,13 @@ export async function getAdminBlogs(_req: Request, res: Response, next: NextFunc
 
 export async function getAdminBlog(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const post = await getAdminBlogById(req.params.id)
+    const id = routeId(req)
+    if (!id) {
+      res.status(400).json({ error: 'Invalid id.' })
+      return
+    }
+
+    const post = await getAdminBlogById(id)
     if (!post) {
       res.status(404).json({ error: 'Not found.' })
       return
@@ -90,7 +101,13 @@ export async function putAdminBlog(req: Request, res: Response, next: NextFuncti
       return
     }
 
-    const result = await updateAdminBlog(req.params.id, parsed.data)
+    const id = routeId(req)
+    if (!id) {
+      res.status(400).json({ error: 'Invalid id.' })
+      return
+    }
+
+    const result = await updateAdminBlog(id, parsed.data)
     sendServiceResult(res, result)
   } catch (err) {
     next(err)
@@ -103,7 +120,13 @@ export async function deleteAdminBlogHandler(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const result = await deleteAdminBlog(req.params.id)
+    const id = routeId(req)
+    if (!id) {
+      res.status(400).json({ error: 'Invalid id.' })
+      return
+    }
+
+    const result = await deleteAdminBlog(id)
     if (!result.ok) {
       res.status(result.status).json({ error: result.error })
       return
@@ -120,7 +143,13 @@ export async function patchPublishAdminBlog(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const result = await publishAdminBlog(req.params.id)
+    const id = routeId(req)
+    if (!id) {
+      res.status(400).json({ error: 'Invalid id.' })
+      return
+    }
+
+    const result = await publishAdminBlog(id)
     sendServiceResult(res, result)
   } catch (err) {
     next(err)
