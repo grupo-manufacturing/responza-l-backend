@@ -26,12 +26,46 @@ export function loadEnv(): Env {
   return parsed.data
 }
 
+function expandOriginVariants(origins: string[]): string[] {
+  const expanded = new Set(origins)
+
+  for (const origin of origins) {
+    try {
+      const url = new URL(origin)
+      const { hostname } = url
+      if (hostname === 'localhost' || hostname.startsWith('127.')) continue
+
+      if (hostname.startsWith('www.')) {
+        const bare = new URL(origin)
+        bare.hostname = hostname.slice(4)
+        expanded.add(bare.origin)
+      } else {
+        const www = new URL(origin)
+        www.hostname = `www.${hostname}`
+        expanded.add(www.origin)
+      }
+    } catch {
+      // keep only the literal value if it is not a valid URL
+    }
+  }
+
+  return [...expanded]
+}
+
 export function getCorsOrigins(env: Env): string[] | undefined {
-  if (!env.CORS_ORIGINS) return undefined
+  if (!env.CORS_ORIGINS) {
+    if (env.NODE_ENV === 'production') {
+      return ['https://responza.in', 'https://www.responza.in']
+    }
+    return undefined
+  }
+
   const list = env.CORS_ORIGINS.split(',')
     .map((o) => o.trim())
     .filter(Boolean)
-  return list.length > 0 ? list : undefined
+
+  if (list.length === 0) return undefined
+  return expandOriginVariants(list)
 }
 
 export function getResendConfig(env: Env): { apiKey: string; from: string } | null {

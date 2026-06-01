@@ -19,3 +19,5 @@ npm run dev
 TypeScript and `@types/*` are regular dependencies so `tsc` works when Render installs with `NODE_ENV=production`.
 
 Set env vars from `.env.example`.
+
+**CORS:** On Render, set `CORS_ORIGINS` to your live site origin(s), e.g. `https://responza.in` (the API also allows `https://www.responza.in` automatically). If the site uses `www`, include it or rely on auto-expansion after redeploy.
